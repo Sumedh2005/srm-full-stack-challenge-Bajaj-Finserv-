@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -198,10 +199,13 @@ app.post("/bfhl", (req, res) => {
   });
 });
 
-app.get("/", (req, res) => res.send("BFHL API is running. POST to /bfhl"));
-
-// ========== STATIC FILES (LAST) ==========
+// ========== STATIC FILES (Serve Frontend) ==========
 app.use(express.static('public'));
+
+// Catch-all: serve index.html for any unknown routes (frontend routing)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
