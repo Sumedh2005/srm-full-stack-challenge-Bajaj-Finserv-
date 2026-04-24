@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3000";
+const API_BASE = "";
 
 const examples = {
   simple: "A->B\nA->C\nB->D\nC->E",
@@ -11,6 +11,7 @@ let currentResponse = null;
 
 function showToast(message, duration = 2000) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), duration);
@@ -18,30 +19,39 @@ function showToast(message, duration = 2000) {
 
 function loadExample(key) {
   const input = document.getElementById('input');
-  input.value = examples[key];
-  input.focus();
+  if (input) {
+    input.value = examples[key];
+    input.focus();
+  }
   showToast(`📋 Loaded: ${key} example`);
   const errorDiv = document.getElementById('error');
   if (errorDiv) errorDiv.style.display = 'none';
 }
 
 function clearInput() {
-  document.getElementById('input').value = '';
-  document.getElementById('output').innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">⌨️</div>
-      <p>Enter edges and click Run</p>
-      <small>Try: A→B, A→C, B→D</small>
-    </div>
-  `;
+  const input = document.getElementById('input');
+  if (input) input.value = '';
+  
+  const output = document.getElementById('output');
+  if (output) {
+    output.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⌨️</div>
+        <p>Enter edges and click Run</p>
+        <small>Try: A→B, A→C, B→D</small>
+      </div>
+    `;
+  }
   updateStatus(null);
-  document.getElementById('copyBtn').style.display = 'none';
+  const copyBtn = document.getElementById('copyBtn');
+  if (copyBtn) copyBtn.style.display = 'none';
   currentResponse = null;
   showToast('🗑️ Cleared');
 }
 
 function updateStatus(state) {
   const dot = document.getElementById('status');
+  if (!dot) return;
   dot.className = 'status';
   if (state === 'loading') dot.classList.add('loading');
   else if (state === 'success') dot.classList.add('success');
@@ -76,7 +86,10 @@ function copyResponse() {
 }
 
 async function submit() {
-  const raw = document.getElementById('input').value.trim();
+  const input = document.getElementById('input');
+  if (!input) return;
+  
+  const raw = input.value.trim();
   if (!raw) {
     showToast('⚠️ Please enter some edges');
     return;
@@ -86,17 +99,24 @@ async function submit() {
   updateStatus('loading');
   
   const outputDiv = document.getElementById('output');
-  outputDiv.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">⏳</div>
-      <p>Processing...</p>
-      <small>Parsing ${data.length} entries</small>
-    </div>
-  `;
-  document.getElementById('copyBtn').style.display = 'none';
+  if (outputDiv) {
+    outputDiv.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <p>Processing...</p>
+        <small>Parsing ${data.length} entries</small>
+      </div>
+    `;
+  }
+  
+  const copyBtn = document.getElementById('copyBtn');
+  if (copyBtn) copyBtn.style.display = 'none';
 
   try {
-    const res = await fetch(`${API_BASE}/bfhl`, {
+    const url = `/bfhl`;
+    console.log('Calling API:', url);
+    
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data })
@@ -108,17 +128,22 @@ async function submit() {
     currentResponse = json;
     updateStatus('success');
     renderOutput(json);
-    document.getElementById('copyBtn').style.display = 'inline-flex';
+    if (copyBtn) copyBtn.style.display = 'inline-flex';
     showToast('✅ Response received');
   } catch (err) {
+    console.error('Error details:', err);
     updateStatus('error');
-    outputDiv.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">❌</div>
-        <p>Request failed</p>
-        <small style="color: var(--error);">${err.message}</small>
-      </div>
-    `;
+    if (outputDiv) {
+      outputDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">❌</div>
+          <p>Request failed</p>
+          <small style="color: var(--error);">${err.message}</small>
+          <br>
+          <small style="color: var(--error); font-size: 0.7rem;">Make sure backend is running at /bfhl</small>
+        </div>
+      `;
+    }
     showToast(`Error: ${err.message}`);
   }
 }
@@ -191,12 +216,13 @@ function renderOutput(data) {
   });
   html += `</div>`;
 
-  document.getElementById('output').innerHTML = html;
+  const output = document.getElementById('output');
+  if (output) output.innerHTML = html;
 }
 
 function toggleHierarchy(idx) {
   const el = document.getElementById(`hier-${idx}`);
-  el.classList.toggle('open');
+  if (el) el.classList.toggle('open');
 }
 
 function escapeHtml(str) {
@@ -216,4 +242,5 @@ document.addEventListener('keydown', (e) => {
 
 window.addEventListener('load', () => {
   console.log('BFHL Frontend ready ✅');
+  console.log('API_BASE:', API_BASE);
 });
