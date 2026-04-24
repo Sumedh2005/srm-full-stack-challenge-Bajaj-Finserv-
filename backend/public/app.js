@@ -1,4 +1,4 @@
-const API_BASE = "";
+const API_BASE = "http://localhost:3000";
 
 const examples = {
   simple: "A->B\nA->C\nB->D\nC->E",

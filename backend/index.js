@@ -4,6 +4,7 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));  // ← ADDED: serves frontend files
 
 const USER_ID = "sumedhsawant_30062005";
 const EMAIL_ID = "ss2335@srmist.edu.in";
