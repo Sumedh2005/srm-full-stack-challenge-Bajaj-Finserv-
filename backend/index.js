@@ -4,7 +4,6 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));  // ← ADDED: serves frontend files
 
 const USER_ID = "sumedhsawant_30062005";
 const EMAIL_ID = "ss2335@srmist.edu.in";
@@ -22,17 +21,14 @@ function validateEntry(raw) {
 function buildUnionFind(nodes) {
   const parent = {};
   for (const n of nodes) parent[n] = n;
-
   const find = (x) => {
     if (parent[x] !== x) parent[x] = find(parent[x]);
     return parent[x];
   };
-
   const union = (a, b) => {
     const pa = find(a), pb = find(b);
     if (pa !== pb) parent[pa] = pb;
   };
-
   return { find, union, parent };
 }
 
@@ -40,7 +36,6 @@ function hasCycle(nodes, adjList) {
   const WHITE = 0, GRAY = 1, BLACK = 2;
   const color = {};
   for (const n of nodes) color[n] = WHITE;
-
   const dfs = (u) => {
     color[u] = GRAY;
     for (const v of (adjList[u] || [])) {
@@ -50,7 +45,6 @@ function hasCycle(nodes, adjList) {
     color[u] = BLACK;
     return false;
   };
-
   for (const n of nodes) {
     if (color[n] === WHITE && dfs(n)) return true;
   }
@@ -75,9 +69,9 @@ function calcDepth(node, adjList, visited = new Set()) {
   return 1 + Math.max(...children.map((c) => calcDepth(c, adjList, new Set(visited))));
 }
 
+// ========== API ROUTE ==========
 app.post("/bfhl", (req, res) => {
   const data = req.body?.data;
-
   if (!Array.isArray(data)) {
     return res.status(400).json({ error: "data must be an array" });
   }
@@ -90,7 +84,6 @@ app.post("/bfhl", (req, res) => {
   for (const item of data) {
     const trimmed = typeof item === "string" ? item.trim() : "";
     const valid = validateEntry(item);
-
     if (valid === null) {
       invalid_entries.push(trimmed || item);
     } else {
@@ -108,7 +101,6 @@ app.post("/bfhl", (req, res) => {
 
   const childParentMap = {};
   const finalEdges = [];
-
   for (const [p, c] of validEdges) {
     if (childParentMap[c] == null) {
       childParentMap[c] = p;
@@ -153,7 +145,6 @@ app.post("/bfhl", (req, res) => {
   for (const groupNodes of Object.values(groups)) {
     const nodeArr = [...groupNodes];
     const cyclic = hasCycle(nodeArr, adjList);
-
     const childrenInGroup = new Set(
       finalEdges
         .filter(([p, c]) => groupNodes.has(p) && groupNodes.has(c))
@@ -163,7 +154,6 @@ app.post("/bfhl", (req, res) => {
 
     if (cyclic) {
       if (roots.length === 0) roots = [nodeArr.sort()[0]];
-
       for (const r of roots.sort()) {
         hierarchies.push({ root: r, tree: {}, has_cycle: true });
       }
@@ -209,6 +199,9 @@ app.post("/bfhl", (req, res) => {
 });
 
 app.get("/", (req, res) => res.send("BFHL API is running. POST to /bfhl"));
+
+// ========== STATIC FILES (LAST) ==========
+app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
